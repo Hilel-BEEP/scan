@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Scanner</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: black;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="scanCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('scanCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let scanY = 0;
+        let direction = 1;
+        let heartbeatOffset = 0;
+
+        function drawScanLine(y) {
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.8)';
+            ctx.fillRect(0, y, canvas.width, 5);
+        }
+
+        function drawECGWave() {
+            ctx.strokeStyle = 'lime';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            let amplitude = 50;
+            let frequency = 0.04;
+            let baseline = canvas.height * 0.75;
+
+            for (let x = 0; x < canvas.width; x += 5) {
+                let wave = Math.sin((x + heartbeatOffset) * frequency) * amplitude;
+                
+                // Add heartbeat spikes (QRS complex)
+                if ((x + heartbeatOffset) % 280 > 120 && (x + heartbeatOffset) % 280 < 130) {
+                    wave -= 100;
+                }
+
+                let y = baseline + wave;
+
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+
+            ctx.stroke();
+        }
+
+        function drawHuman() {
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.6)';
+            ctx.lineWidth = 4;
+            
+            let centerX = canvas.width / 2;
+            let centerY = canvas.height / 2;
+            let size = 100;
+
+            ctx.beginPath();
+
+            // Head
+            ctx.arc(centerX, centerY - size * 1.6, size / 3, 0, Math.PI * 2);
+
+            // Body
+            ctx.moveTo(centerX, centerY - size * 1.3);
+            ctx.lineTo(centerX, centerY);
+
+            // Arms
+            ctx.moveTo(centerX - size / 2, centerY - size / 2);
+            ctx.lineTo(centerX, centerY - size / 1.5);
+            ctx.lineTo(centerX + size / 2, centerY - size / 2);
+
+            // Legs
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX - size / 2, centerY + size);
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + size / 2, centerY + size);
+
+            ctx.stroke();
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawHuman();
+            drawECGWave();
+            drawScanLine(scanY);
+
+            scanY += direction * 4;
+            if (scanY > canvas.height || scanY < 0) direction *= -1;
+
+            heartbeatOffset += 5;
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
